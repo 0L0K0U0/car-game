@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Autonomous Driving Experience - Three.js 3D Simulation</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚗</text></svg>">
+  <link rel="stylesheet" href="./style.css">
+
+  <!-- ES Modules Importmap: Local Three.js r160 -->
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "./libs/three.module.js"
+    }
+  }
+  </script>
+</head>
+<body>
+  <!-- 3D WebGL Canvas -->
+  <div id="game-container">
+    <canvas id="webgl-canvas"></canvas>
+  </div>
+
+  <!-- Crash Red Flash Overlay -->
+  <div id="crash-overlay" class="crash-overlay"></div>
+
+  <!-- Main HUD Layer -->
+  <div id="hud-layer" class="hud-layer hidden">
+    <!-- Top Status & Quick Bar -->
+    <header class="hud-top-bar">
+      <div class="hud-brand">
+        <span class="hud-icon">⚡</span>
+        <span id="txt-app-title" class="hud-title">Autonomous Drive</span>
+        <span id="hud-mode-badge" class="mode-badge manual">MANUAL DRIVE</span>
+        <span id="hud-flawless-badge" class="badge-flawless hidden">FLAWLESS MODE</span>
+      </div>
+
+      <div class="hud-quick-controls">
+        <button id="btn-toggle-view" class="hud-btn" title="Switch View [V]">
+          <span class="btn-icon">🎥</span><span id="txt-btn-view" class="btn-txt">View [V]</span>
+        </button>
+        <button id="btn-toggle-mode" class="hud-btn highlight" title="Toggle ADAS [C]">
+          <span class="btn-icon">🤖</span><span id="txt-btn-mode" class="btn-txt">ADAS [C]</span>
+        </button>
+        <button id="btn-toggle-daynight" class="hud-btn" title="Day / Night [N]">
+          <span class="btn-icon" id="icon-daynight">☀️</span><span id="txt-btn-daynight" class="btn-txt">Day/Night [N]</span>
+        </button>
+        <button id="btn-toggle-lights" class="hud-btn" title="Headlights [L]">
+          <span class="btn-icon">💡</span><span id="txt-btn-lights" class="btn-txt">Lights [L]</span>
+        </button>
+        <button id="btn-hud-flawless" class="hud-btn flawless-toggle" title="Flawless Mode">
+          <span class="btn-icon">🛡️</span><span id="txt-btn-flawless" class="btn-txt">Flawless</span>
+        </button>
+        <button id="btn-toggle-audio" class="hud-btn icon-only" title="Mute Toggle">
+          <span id="icon-audio">🔊</span>
+        </button>
+        <button id="btn-open-settings" class="hud-btn icon-only" title="Settings">
+          <span>⚙️</span>
+        </button>
+        <button id="btn-lang-toggle" class="hud-btn lang-btn hidden" title="Language" style="display: none;">
+          <span>🌐</span> <span id="txt-lang-toggle">English</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Emergency Event Banner -->
+    <div id="hud-event-banner" class="event-banner hidden">
+      <div class="event-icon" id="event-banner-icon">⚠️</div>
+      <div class="event-body">
+        <div class="event-title-row">
+          <span id="event-banner-tag" class="event-tag">ALERT</span>
+          <span id="event-banner-title" class="event-title">Multi-Vehicle Crash Ahead</span>
+        </div>
+        <p id="event-banner-desc" class="event-desc">Incident ahead in 120m, slow down or steer to evade!</p>
+      </div>
+    </div>
+
+    <!-- Takeover Warning Toast -->
+    <div id="hud-takeover-alert" class="takeover-alert hidden">
+      <span class="alert-icon">⚠️</span>
+      <span id="txt-takeover-alert">Driver override detected! Disengaged to manual control.</span>
+    </div>
+
+    <!-- Left Panel: ADAS & Headway -->
+    <div class="hud-left-panel">
+      <!-- Headway Bars -->
+      <div class="glass-card adas-card">
+        <div class="card-header">
+          <span id="txt-headway-label" class="card-title">HEADWAY</span>
+          <span id="hud-headway-val" class="card-val">3.0s (L5)</span>
+        </div>
+        <div class="headway-meter-bars" id="headway-bars">
+          <span class="bar active"></span>
+          <span class="bar active"></span>
+          <span class="bar active"></span>
+          <span class="bar active"></span>
+          <span class="bar active"></span>
+        </div>
+        <div class="distance-readouts">
+          <div id="hud-actual-dist" class="dist-row">Actual Dist: -- m</div>
+          <div id="hud-target-dist" class="dist-row sub">Target Dist: 40.0 m</div>
+        </div>
+      </div>
+
+      <!-- TTC Warning Card -->
+      <div class="glass-card ttc-card" id="ttc-card">
+        <div class="card-header">
+          <span id="txt-ttc-label" class="card-title">TIME TO COLLISION (TTC)</span>
+          <span id="hud-ttc-val" class="ttc-val safe">SAFE</span>
+        </div>
+        <div class="ttc-bar-bg">
+          <div id="hud-ttc-fill" class="ttc-bar-fill safe" style="width: 100%;"></div>
+        </div>
+      </div>
+
+      <!-- ADAS Subsystems Indicators -->
+      <div class="glass-card adas-indicators">
+        <div class="indicator-item" id="ind-acc">
+          <span class="ind-dot active"></span>
+          <span id="txt-acc-status" class="ind-name">ACC Cruise</span>
+        </div>
+        <div class="indicator-item" id="ind-lka">
+          <span class="ind-dot active"></span>
+          <span id="txt-lka-status" class="ind-name">LKA Lane Keep</span>
+        </div>
+        <div class="indicator-item" id="ind-aeb">
+          <span class="ind-dot active"></span>
+          <span id="txt-aeb-status" class="ind-name">AEB Emergency Brake</span>
+        </div>
+        <div class="indicator-item" id="ind-alc">
+          <span class="ind-dot active"></span>
+          <span id="txt-alc-status" class="ind-name">ALC Auto Lane Change</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Panel: Radar & Stats -->
+    <div class="hud-right-panel">
+      <div class="glass-card radar-card">
+        <div class="card-header">
+          <span id="txt-radar-title" class="card-title">RADAR</span>
+          <span class="radar-range">50m</span>
+        </div>
+        <div class="radar-canvas-box">
+          <canvas id="radar-canvas" width="160" height="160"></canvas>
+        </div>
+      </div>
+
+      <div class="glass-card stats-card">
+        <div id="hud-mileage" class="stat-line">Distance: 0.0 km</div>
+        <div id="hud-events-count" class="stat-line">Evaded: 0</div>
+        <div id="hud-comfort-score" class="stat-line">Ride Comfort: 100 pts</div>
+      </div>
+    </div>
+
+    <!-- Bottom Center: Speedometer, Gear & RPM Gauge -->
+    <div class="hud-bottom-center">
+      <div class="gauge-cluster">
+        <!-- Turn Signals -->
+        <div class="blinker-cluster">
+          <span id="blinker-left" class="blinker-arrow">◀</span>
+          <span id="gear-indicator" class="gear-badge">D</span>
+          <span id="blinker-right" class="blinker-arrow">▶</span>
+        </div>
+
+        <!-- Speed Display -->
+        <div class="speedometer-box">
+          <span id="hud-speed-num" class="speed-number">0</span>
+          <span id="txt-speed-unit" class="speed-unit">km/h</span>
+        </div>
+
+        <!-- RPM Bar -->
+        <div class="rpm-bar-container">
+          <div class="rpm-label">RPM</div>
+          <div class="rpm-track">
+            <div id="hud-rpm-fill" class="rpm-fill" style="width: 15%;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Replay Badge -->
+  <div id="replay-badge" class="replay-badge hidden">
+    <span class="pulse-rec">●</span> <span id="txt-replay-badge">Replaying 5s Incident in Slow-Motion</span>
+  </div>
+
+  <!-- Start Menu Modal -->
+  <div id="modal-start" class="modal-backdrop">
+    <div class="modal-window glass-panel">
+      <h1 id="txt-menu-title" class="modal-title">Autonomous Driving Experience</h1>
+      <p id="txt-menu-sub" class="modal-subtitle">Three.js 3D Autonomous Vehicle Simulation</p>
+
+      <div class="start-options-grid">
+        <div class="opt-group">
+          <label id="txt-lbl-diff">Difficulty Level</label>
+          <select id="sel-diff" class="form-select">
+            <option value="easy">Easy (Sparse Events / Wide Window)</option>
+            <option value="normal">Standard (Balanced Traffic)</option>
+            <option value="hard" selected>Hard (Frequent Emergencies)</option>
+          </select>
+        </div>
+        <div class="opt-group">
+          <label id="txt-lbl-weather">Initial Weather</label>
+          <select id="sel-weather" class="form-select">
+            <option value="clear" selected>Clear Sky</option>
+            <option value="rain">Rain (Low Grip)</option>
+            <option value="fog">Dense Fog (Low Visibility)</option>
+          </select>
+        </div>
+        <div class="opt-group">
+          <label id="txt-lbl-time">Time of Day</label>
+          <select id="sel-time" class="form-select">
+            <option value="day" selected>Daytime</option>
+            <option value="night">Night (Headlights / Reduced Range)</option>
+          </select>
+        </div>
+        <div class="opt-group">
+          <label id="txt-lbl-quality">Graphics Quality</label>
+          <select id="sel-quality" class="form-select">
+            <option value="high" selected>Ultra (HD Shadows & Foliage)</option>
+            <option value="medium">Balanced (Standard)</option>
+            <option value="low">Performance (Minimal Lighting)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="modal-action-row">
+        <button id="btn-start-drive" class="btn-primary-large">Start Driving</button>
+        <button id="btn-open-tutorial" class="btn-secondary">Controls Guide</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pause Menu Modal -->
+  <div id="modal-pause" class="modal-backdrop hidden">
+    <div class="modal-window glass-panel pause-window">
+      <h2 id="txt-pause-title" class="modal-title">Simulation Paused</h2>
+      <div class="pause-actions">
+        <button id="btn-resume-drive" class="btn-primary">Resume Drive [ESC]</button>
+        <button id="btn-pause-settings" class="btn-secondary">ADAS Settings</button>
+        <button id="btn-pause-restart" class="btn-secondary">Restart Run</button>
+        <button id="btn-pause-quit" class="btn-danger">Quit to Menu</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADAS Settings Modal -->
+  <div id="modal-settings" class="modal-backdrop hidden">
+    <div class="modal-window glass-panel settings-window">
+      <div class="modal-header-row">
+        <h2 id="txt-settings-title" class="modal-title">ADAS & System Settings</h2>
+        <button id="btn-close-settings" class="btn-close">✕</button>
+      </div>
+
+      <div class="settings-scroll-body">
+        <!-- Flawless Mode Switch -->
+        <div class="setting-item highlight-box">
+          <div class="setting-info">
+            <span id="txt-set-flawless" class="setting-label">🛡️ Flawless Mode (Zero Faults)</span>
+            <span id="txt-flawless-sub" class="setting-sub">Zero sensor delay & noise, optimal path planning for 100% collision-free driving</span>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" id="chk-flawless">
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <!-- Cruise Target Speed -->
+        <div class="setting-item">
+          <div class="setting-info">
+            <span id="txt-set-cruise" class="setting-label">Cruise Target Speed</span>
+            <span id="val-set-cruise" class="setting-val">130 km/h</span>
+          </div>
+          <input type="range" id="rng-cruise" min="30" max="130" step="5" value="130" class="form-range">
+        </div>
+
+        <!-- Time Headway -->
+        <div class="setting-item">
+          <div class="setting-info">
+            <span id="txt-set-headway" class="setting-label">Time Headway Level</span>
+            <span id="val-set-headway" class="setting-val">3.0 s (L5)</span>
+          </div>
+          <input type="range" id="rng-headway" min="1" max="5" step="1" value="5" class="form-range">
+        </div>
+
+        <!-- Driving Style -->
+        <div class="setting-item">
+          <div class="setting-info">
+            <span id="txt-set-style" class="setting-label">Driving Style</span>
+          </div>
+          <select id="sel-style" class="form-select">
+            <option value="conservative">Conservative (Early Braking, Smooth)</option>
+            <option value="standard">Standard (Balanced)</option>
+            <option value="aggressive" selected>Aggressive (Tight Merging, High Power)</option>
+          </select>
+        </div>
+
+        <!-- Sensor Sensitivity -->
+        <div class="setting-item">
+          <div class="setting-info">
+            <span id="txt-set-sensitivity" class="setting-label">Sensor Sensitivity</span>
+            <span class="setting-sub">Affects detection range and reaction latency</span>
+          </div>
+          <select id="sel-sensitivity" class="form-select">
+            <option value="low">Low (Short Range, Delayed Reaction)</option>
+            <option value="medium">Medium (Standard Fusion)</option>
+            <option value="high" selected>High (Long-range Precision)</option>
+          </select>
+        </div>
+
+        <!-- AEB Toggle -->
+        <div class="setting-item">
+          <div class="setting-info">
+            <span id="txt-set-aeb" class="setting-label">AEB Emergency Braking</span>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" id="chk-aeb" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <!-- LKA Centering Strength -->
+        <div class="setting-item">
+          <div class="setting-info">
+            <span id="txt-set-lka" class="setting-label">LKA Lane Centering Strength</span>
+            <span id="val-set-lka" class="setting-val">2.0x</span>
+          </div>
+          <input type="range" id="rng-lka" min="0.2" max="2.0" step="0.2" value="2.0" class="form-range">
+        </div>
+
+        <!-- Auto Lane Change & Evasion -->
+        <div class="setting-item">
+          <div class="setting-info">
+            <span id="txt-set-alc" class="setting-label">ALC Auto Lane Changing & Evasion</span>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" id="chk-alc" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <!-- Cut-in Tolerance -->
+        <div class="setting-item">
+          <div class="setting-info">
+            <span id="txt-set-cutin" class="setting-label">Cut-in Tolerance</span>
+            <span id="val-set-cutin" class="setting-val">2.0</span>
+          </div>
+          <input type="range" id="rng-cutin" min="0.5" max="2.0" step="0.1" value="2.0" class="form-range">
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button id="btn-save-settings" class="btn-primary">Apply Settings</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Incident Analysis Report Modal -->
+  <div id="modal-accident" class="modal-backdrop hidden">
+    <div class="modal-window glass-panel accident-window">
+      <div class="accident-banner">
+        <span class="crash-symbol">💥</span>
+        <h2 id="txt-accident-title" class="accident-title">Incident Analysis Report</h2>
+      </div>
+
+      <div class="accident-metrics">
+        <div class="metric-box">
+          <div class="metric-lbl" id="acc-lbl-speed">Impact Speed</div>
+          <div id="acc-metric-speed" class="metric-num">65 km/h</div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-lbl" id="acc-lbl-headway">Time Headway</div>
+          <div id="acc-metric-headway" class="metric-num">0.8 s</div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-lbl" id="acc-lbl-delay">Perception Delay</div>
+          <div id="acc-metric-delay" class="metric-num">380 ms</div>
+        </div>
+      </div>
+
+      <div class="accident-detail-card">
+        <h3 id="txt-acc-cause-title" class="section-heading">Root Cause Analysis</h3>
+        <p id="acc-cause-text" class="cause-text">Headway too short (0.8s). At 90 km/h braking distance exceeded perception margin.</p>
+      </div>
+
+      <div class="accident-detail-card">
+        <h3 id="txt-acc-advice-title" class="section-heading">Recommendations</h3>
+        <p id="acc-advice-text" class="advice-text">Increase time headway to >= 1.8s, increase sensor sensitivity, or enable Flawless Mode.</p>
+      </div>
+
+      <div class="modal-action-row">
+        <button id="btn-accident-replay" class="btn-secondary">
+          <span>⏪</span> <span id="txt-btn-replay">5s Slow-Motion Replay</span>
+        </button>
+        <button id="btn-accident-restart" class="btn-primary">
+          <span>🔄</span> <span id="txt-btn-restart">Retry Run</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Controls & Tutorial Guide Modal -->
+  <div id="modal-tutorial" class="modal-backdrop hidden">
+    <div class="modal-window glass-panel tutorial-window">
+      <div class="modal-header-row">
+        <h2 id="txt-tut-title" class="modal-title">Vehicle Controls & Guide</h2>
+        <button id="btn-close-tut" class="btn-close">✕</button>
+      </div>
+      <div class="tutorial-content">
+        <div class="tut-keys-grid">
+          <div class="key-card"><kbd>W</kbd> / <kbd>↑</kbd> <span id="tut-key-throttle">Throttle / Accelerate</span></div>
+          <div class="key-card"><kbd>S</kbd> / <kbd>↓</kbd> <span id="tut-key-brake">Brake / Reverse</span></div>
+          <div class="key-card"><kbd>A</kbd> <kbd>D</kbd> / <kbd>←</kbd> <kbd>→</kbd> <span id="tut-key-steer">Steering Wheel</span></div>
+          <div class="key-card"><kbd>Space</kbd> <span id="tut-key-handbrake">Handbrake</span></div>
+          <div class="key-card"><kbd>C</kbd> <span id="tut-key-smart">Engage / Disengage ADAS</span></div>
+          <div class="key-card"><kbd>V</kbd> <span id="tut-key-view">Switch Cockpit / Chase View</span></div>
+          <div class="key-card"><kbd>N</kbd> <span id="tut-key-daynight">Day / Night Switch</span></div>
+          <div class="key-card"><kbd>L</kbd> <span id="tut-key-lights">Headlights On / Off</span></div>
+          <div class="key-card"><kbd>Q</kbd> / <kbd>E</kbd> <span id="tut-key-blinker">Left / Right Turn Signals</span></div>
+          <div class="key-card"><kbd>ESC</kbd> <span id="tut-key-pause">Pause Menu</span></div>
+        </div>
+        <div class="tut-tips-box">
+          <p id="txt-tut-tip1">💡 When ADAS is active, controls are managed automatically. Press brake or steer firmly to take over anytime.</p>
+          <p id="txt-tut-tip2">🌙 At night without headlights, sensor range drops significantly. Keep lights on at night.</p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="btn-got-tut" class="btn-primary">Got It</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Application Entry Point -->
+  <script type="module" src="./main.js"></script>
+</body>
+</html>

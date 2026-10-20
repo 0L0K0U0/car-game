@@ -1,0 +1,1002 @@
+/* ==========================================================================
+   style.css - 智能驾驶体验小游戏 全局玻璃拟态风格与响应式 HUD 样式
+   ========================================================================== */
+
+:root {
+  --primary-glow: #00d2ff;
+  --primary-accent: #00b4d8;
+  --success-color: #00f076;
+  --warning-color: #ffb703;
+  --danger-color: #ff3366;
+  --flawless-gold: #ffbe0b;
+  --bg-glass: rgba(15, 23, 42, 0.72);
+  --bg-glass-card: rgba(30, 41, 59, 0.65);
+  --border-glass: rgba(255, 255, 255, 0.14);
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  user-select: none;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: #000;
+  font-family: var(--font-family);
+  color: var(--text-main);
+}
+
+#game-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 1;
+}
+
+#webgl-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* 碰撞红屏震动闪烁层 */
+.crash-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  background: radial-gradient(circle, rgba(255, 51, 102, 0.6) 0%, rgba(200, 0, 40, 0.85) 100%);
+  opacity: 0;
+  z-index: 99;
+  transition: opacity 0.1s ease-out;
+}
+
+.crash-overlay.active {
+  opacity: 1;
+  animation: crashShake 0.45s ease-in-out;
+}
+
+@keyframes crashShake {
+  0% { transform: translate(0, 0) scale(1); }
+  20% { transform: translate(-8px, 6px) scale(1.02); }
+  40% { transform: translate(7px, -5px) scale(1.01); }
+  60% { transform: translate(-5px, 3px) scale(1.01); }
+  80% { transform: translate(3px, -2px) scale(1); }
+  100% { transform: translate(0, 0) scale(1); }
+}
+
+/* HUD 仪表主层 */
+.hud-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 10;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 16px 24px;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* 顶部状态与快速控制栏 */
+.hud-top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  pointer-events: auto;
+  background: var(--bg-glass);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid var(--border-glass);
+  border-radius: 14px;
+  padding: 8px 18px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+.hud-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.hud-icon {
+  font-size: 1.3rem;
+  color: var(--primary-glow);
+}
+
+.hud-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.mode-badge {
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.mode-badge.manual {
+  background: rgba(148, 163, 184, 0.25);
+  color: #cbd5e1;
+  border: 1px solid rgba(148, 163, 184, 0.4);
+}
+
+.mode-badge.smart {
+  background: rgba(0, 210, 255, 0.22);
+  color: var(--primary-glow);
+  border: 1px solid var(--primary-glow);
+  box-shadow: 0 0 10px rgba(0, 210, 255, 0.4);
+}
+
+.badge-flawless {
+  background: rgba(255, 190, 11, 0.25);
+  color: var(--flawless-gold);
+  border: 1px solid var(--flawless-gold);
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  box-shadow: 0 0 12px rgba(255, 190, 11, 0.4);
+  animation: pulseGold 2s infinite ease-in-out;
+}
+
+@keyframes pulseGold {
+  0%, 100% { opacity: 0.85; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.03); }
+}
+
+.hud-quick-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hud-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border-glass);
+  color: var(--text-main);
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.hud-btn:hover {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+}
+
+.hud-btn.highlight {
+  border-color: var(--primary-accent);
+  color: var(--primary-glow);
+}
+
+.hud-btn.flawless-toggle.active {
+  background: rgba(255, 190, 11, 0.3);
+  border-color: var(--flawless-gold);
+  color: #fff;
+}
+
+.hud-btn.icon-only {
+  padding: 6px 10px;
+}
+
+.lang-btn {
+  border-color: var(--primary-glow);
+  color: var(--primary-glow);
+  font-weight: 600;
+}
+
+/* 突发事件提示横幅 */
+.event-banner {
+  position: absolute;
+  top: 76px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: rgba(220, 38, 38, 0.82);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 150, 150, 0.5);
+  border-radius: 12px;
+  padding: 12px 24px;
+  min-width: 420px;
+  max-width: 650px;
+  box-shadow: 0 8px 30px rgba(220, 38, 38, 0.5);
+  animation: bannerSlideDown 0.35s ease-out;
+}
+
+@keyframes bannerSlideDown {
+  from { opacity: 0; transform: translate(-50%, -20px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+.event-banner.warning {
+  background: rgba(217, 119, 6, 0.85);
+  border-color: rgba(253, 224, 71, 0.6);
+  box-shadow: 0 8px 30px rgba(217, 119, 6, 0.4);
+}
+
+.event-banner.resolved {
+  background: rgba(16, 185, 129, 0.85);
+  border-color: rgba(110, 231, 183, 0.6);
+  box-shadow: 0 8px 30px rgba(16, 185, 129, 0.4);
+}
+
+.event-icon {
+  font-size: 1.8rem;
+}
+
+.event-body {
+  flex: 1;
+}
+
+.event-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.event-tag {
+  background: rgba(0, 0, 0, 0.3);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.event-title {
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.event-desc {
+  font-size: 0.85rem;
+  color: #f1f5f9;
+}
+
+/* 接管警示气泡 */
+.takeover-alert {
+  position: absolute;
+  top: 136px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(245, 158, 11, 0.9);
+  color: #000;
+  font-weight: 700;
+  font-size: 0.9rem;
+  padding: 8px 18px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 6px 20px rgba(245, 158, 11, 0.5);
+  animation: pulseAlert 0.8s infinite alternate;
+}
+
+@keyframes pulseAlert {
+  from { transform: translateX(-50%) scale(1); }
+  to { transform: translateX(-50%) scale(1.04); }
+}
+
+/* 玻璃拟态基础卡片 */
+.glass-card {
+  background: var(--bg-glass-card);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border-glass);
+  border-radius: 12px;
+  padding: 12px 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  pointer-events: auto;
+}
+
+/* 左右两侧面板布局 */
+.hud-left-panel, .hud-right-panel {
+  position: absolute;
+  top: 86px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.hud-left-panel {
+  left: 24px;
+  width: 250px;
+}
+
+.hud-right-panel {
+  right: 24px;
+  width: 210px;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.card-title {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.card-val {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--primary-glow);
+}
+
+/* 跟车时距柱状格 */
+.headway-meter-bars {
+  display: flex;
+  gap: 4px;
+  height: 8px;
+  margin-bottom: 8px;
+}
+
+.headway-meter-bars .bar {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 2px;
+  transition: background 0.2s ease;
+}
+
+.headway-meter-bars .bar.active {
+  background: var(--primary-glow);
+  box-shadow: 0 0 6px var(--primary-glow);
+}
+
+.dist-row {
+  font-size: 0.85rem;
+  color: #e2e8f0;
+}
+
+.dist-row.sub {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+/* TTC 碰撞时间警告条 */
+.ttc-val {
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.ttc-val.safe { color: var(--success-color); }
+.ttc-val.warning { color: var(--warning-color); }
+.ttc-val.danger { color: var(--danger-color); animation: blinkDanger 0.4s infinite; }
+
+@keyframes blinkDanger {
+  50% { opacity: 0.4; }
+}
+
+.ttc-bar-bg {
+  width: 100%;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.ttc-bar-fill {
+  height: 100%;
+  transition: width 0.15s linear, background-color 0.2s ease;
+}
+
+.ttc-bar-fill.safe { background: var(--success-color); }
+.ttc-bar-fill.warning { background: var(--warning-color); }
+.ttc-bar-fill.danger { background: var(--danger-color); }
+
+/* ADAS 状态指示灯 */
+.adas-indicators {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.indicator-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.ind-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #64748b;
+}
+
+.ind-dot.active {
+  background: var(--success-color);
+  box-shadow: 0 0 8px var(--success-color);
+}
+
+.ind-dot.warning {
+  background: var(--warning-color);
+  box-shadow: 0 0 8px var(--warning-color);
+}
+
+/* 态势雷达与统计 */
+.radar-range {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.radar-canvas-box {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#radar-canvas {
+  background: radial-gradient(circle, rgba(15, 23, 42, 0.9) 0%, rgba(2, 6, 23, 0.95) 100%);
+  border-radius: 50%;
+  border: 1px solid rgba(0, 210, 255, 0.3);
+}
+
+.stats-card .stat-line {
+  font-size: 0.8rem;
+  color: #cbd5e1;
+  margin-bottom: 4px;
+}
+
+/* 底部中央仪表组 */
+.hud-bottom-center {
+  align-self: center;
+  pointer-events: auto;
+  margin-bottom: 12px;
+}
+
+.gauge-cluster {
+  background: var(--bg-glass);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid var(--border-glass);
+  border-radius: 18px;
+  padding: 10px 28px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: 0 10px 35px rgba(0, 0, 0, 0.45);
+}
+
+.blinker-cluster {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-bottom: 2px;
+}
+
+.blinker-arrow {
+  color: rgba(255, 255, 255, 0.18);
+  font-size: 1.1rem;
+  transition: color 0.1s;
+}
+
+.blinker-arrow.active {
+  color: #ffb703;
+  text-shadow: 0 0 10px #ffb703;
+}
+
+.gear-badge {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--primary-glow);
+  width: 28px;
+  text-align: center;
+}
+
+.speedometer-box {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.speed-number {
+  font-size: 3.2rem;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -1px;
+  font-variant-numeric: tabular-nums;
+  color: #fff;
+  text-shadow: 0 0 16px rgba(0, 210, 255, 0.4);
+}
+
+.speed-unit {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.rpm-bar-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 170px;
+  margin-top: 4px;
+}
+
+.rpm-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.rpm-track {
+  flex: 1;
+  height: 5px;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.rpm-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #00d2ff 0%, #ffbe0b 75%, #ff3366 100%);
+  transition: width 0.08s ease-out;
+}
+
+/* 慢动作复盘角标 */
+.replay-badge {
+  position: absolute;
+  bottom: 30px;
+  left: 30px;
+  background: rgba(220, 38, 38, 0.85);
+  color: #fff;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  z-index: 50;
+  animation: pulseAlert 1s infinite alternate;
+}
+
+.pulse-rec {
+  color: #fff;
+}
+
+/* 弹窗通用体系 */
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(4, 7, 16, 0.78);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 100;
+  padding: 20px;
+}
+
+.modal-window {
+  width: 100%;
+  max-width: 580px;
+  max-height: 90vh;
+  overflow-y: auto;
+  border-radius: 18px;
+  padding: 28px;
+  box-shadow: 0 16px 45px rgba(0, 0, 0, 0.6);
+  border: 1px solid var(--border-glass);
+}
+
+.glass-panel {
+  background: rgba(15, 23, 42, 0.88);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+.modal-title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  margin-bottom: 6px;
+  text-align: center;
+}
+
+.modal-subtitle {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.modal-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.modal-header-row .modal-title {
+  margin-bottom: 0;
+  text-align: left;
+  font-size: 1.3rem;
+}
+
+.btn-close {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1.3rem;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+
+.btn-close:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.start-options-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.opt-group label {
+  display: block;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+
+.form-select, .form-range {
+  width: 100%;
+}
+
+.form-select {
+  background: rgba(30, 41, 59, 0.85);
+  border: 1px solid var(--border-glass);
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  outline: none;
+  cursor: pointer;
+}
+
+.form-select:focus {
+  border-color: var(--primary-glow);
+}
+
+.modal-action-row {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.btn-primary-large {
+  background: linear-gradient(135deg, #00b4d8 0%, #0077b6 100%);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+  padding: 12px 32px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 6px 20px rgba(0, 180, 216, 0.4);
+}
+
+.btn-primary-large:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 180, 216, 0.6);
+}
+
+.btn-primary {
+  background: var(--primary-accent);
+  border: none;
+  color: #fff;
+  padding: 10px 20px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.btn-secondary {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border-glass);
+  color: #fff;
+  padding: 10px 20px;
+  font-size: 0.95rem;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.btn-danger {
+  background: rgba(239, 68, 68, 0.25);
+  border: 1px solid rgba(239, 68, 68, 0.5);
+  color: #fca5a5;
+  padding: 10px 20px;
+  font-size: 0.95rem;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+/* 暂停菜单样式 */
+.pause-window {
+  max-width: 380px;
+  text-align: center;
+}
+
+.pause-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+/* 设置面板样式 */
+.settings-window {
+  max-width: 620px;
+}
+
+.settings-scroll-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 20px;
+  max-height: 60vh;
+  overflow-y: auto;
+  padding-right: 6px;
+}
+
+.setting-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  background: rgba(30, 41, 59, 0.4);
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.setting-item.highlight-box {
+  background: rgba(255, 190, 11, 0.1);
+  border: 1px solid rgba(255, 190, 11, 0.35);
+}
+
+.setting-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-width: 68%;
+}
+
+.setting-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.setting-sub {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.setting-val {
+  font-size: 0.8rem;
+  color: var(--primary-glow);
+  font-weight: 600;
+}
+
+/* 开关 Toggle */
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 48px;
+  height: 26px;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-switch .slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: #334155;
+  transition: 0.3s;
+  border-radius: 26px;
+}
+
+.toggle-switch .slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  transition: 0.3s;
+  border-radius: 50%;
+}
+
+.toggle-switch input:checked + .slider {
+  background-color: var(--primary-glow);
+}
+
+.toggle-switch input:checked + .slider:before {
+  transform: translateX(22px);
+}
+
+/* 事故分析面板 (R8) */
+.accident-window {
+  max-width: 650px;
+}
+
+.accident-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+  justify-content: center;
+}
+
+.crash-symbol {
+  font-size: 2rem;
+}
+
+.accident-title {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: #ff4d6d;
+}
+
+.accident-metrics {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.metric-box {
+  background: rgba(30, 41, 59, 0.6);
+  border: 1px solid var(--border-glass);
+  border-radius: 8px;
+  padding: 10px;
+  text-align: center;
+}
+
+.metric-lbl {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.metric-num {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #fff;
+  margin-top: 4px;
+}
+
+.accident-detail-card {
+  background: rgba(30, 41, 59, 0.5);
+  border-left: 3px solid var(--danger-color);
+  border-radius: 4px 8px 8px 4px;
+  padding: 12px 16px;
+  margin-bottom: 14px;
+}
+
+.accident-detail-card:nth-of-type(2) {
+  border-left-color: var(--success-color);
+}
+
+.section-heading {
+  font-size: 0.9rem;
+  font-weight: 700;
+  margin-bottom: 6px;
+  color: #cbd5e1;
+}
+
+.cause-text, .advice-text {
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: #e2e8f0;
+}
+
+/* 键位指南弹窗 */
+.tutorial-window {
+  max-width: 580px;
+}
+
+.tut-keys-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.key-card {
+  background: rgba(30, 41, 59, 0.6);
+  padding: 8px 12px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.82rem;
+}
+
+kbd {
+  background: #334155;
+  border: 1px solid #475569;
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-family: monospace;
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--primary-glow);
+}
+
+.tut-tips-box {
+  background: rgba(0, 210, 255, 0.08);
+  border-left: 3px solid var(--primary-glow);
+  padding: 10px 14px;
+  border-radius: 4px 8px 8px 4px;
+  font-size: 0.8rem;
+  line-height: 1.6;
+}
+
+/* 响应式适配 */
+@media (max-width: 900px) {
+  .hud-left-panel { width: 200px; left: 14px; }
+  .hud-right-panel { width: 170px; right: 14px; }
+  .hud-top-bar { padding: 6px 12px; }
+  .hud-title { display: none; }
+  .speed-number { font-size: 2.6rem; }
+  .event-banner { min-width: 320px; }
+}
+
+@media (min-width: 2500px) { /* 4K 适配 */
+  .hud-title { font-size: 1.6rem; }
+  .hud-btn { font-size: 1.2rem; padding: 10px 18px; }
+  .speed-number { font-size: 4.8rem; }
+  .hud-left-panel { width: 340px; }
+  .hud-right-panel { width: 300px; }
+}
