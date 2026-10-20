@@ -4,42 +4,6 @@ A browser-native 3D Autonomous Vehicle simulation game powered by **Three.js (r1
 Zero external 3D models, textures, or audio files required — all vehicles, roads, and environments are procedurally generated, and all audio is synthesized via WebAudio API in real-time.
 
 ---
-
-## 🌐 GitHub Pages 部署指南 (Deploy to GitHub Pages)
-
-本项目为**纯静态网站架构**，无需任何打包构建（No npm build / webpack / vite required），直接支持一键推送到 GitHub Pages 托管运行。
-
-### 部署步骤 (Step-by-step Guide)
-
-1. **创建 GitHub 仓库并推送代码**：
-   ```bash
-   git init
-   git add .
-   git commit -m "feat: initial commit for autonomous driving game"
-   git branch -M main
-   git remote add origin https://github.com/<YOUR-USERNAME>/<REPO-NAME>.git
-   git push -u origin main
-   ```
-
-2. **在 GitHub 仓库中开启 GitHub Pages**：
-   - 打开 GitHub 仓库页面，点击顶部 **Settings**（设置）；
-   - 在左侧侧边栏中找到并点击 **Pages**；
-   - 在 **Build and deployment** > **Source** 下拉框中，选择 **Deploy from a branch**；
-   - 在 **Branch** 下拉框中，选择 **main** 分支，目录选择 **/ (root)**，点击 **Save**。
-
-3. **访问在线运行地址**：
-   - 等待 GitHub Actions 部署完成（约 30 秒至 1 分钟）；
-   - 访问生成的在线网址：
-     `https://<YOUR-USERNAME>.github.io/<REPO-NAME>/`
-   - 例如：`https://kwang-you.github.io/car-game/`
-
-### 💡 静态资源相对路径保障
-- 项目入口 `index.html` 位于根目录；
-- 所有资源引用（`./style.css`、`./main.js`、`importmap` 中的 `./libs/three.module.js`）均采用严格相对路径；
-- 无论是部署在根域名（如 `https://custom-domain.com/`）还是仓库二级子路径（如 `https://username.github.io/car-game/`），资源与脚本均能 100% 正确加载。
-
----
-
 ## 🚀 本地启动与测试方式 (Local Development)
 
 ### 方式一：Node.js 原生一键启动（支持根目录与子路径测试）
